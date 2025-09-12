@@ -195,7 +195,7 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
 
 
             # --- Métricas rápidas ---
-            c1, c2 = st.columns([3, 1])
+            c1, c2 = st.columns([7, 3])
             with c1:
                 if variacion_precio is not None:
                     st.metric("Precio", f"${format_price(producto["precio"])}", f"${format_price(variacion_precio) if variacion_precio is not None else 'N/A'}")    
