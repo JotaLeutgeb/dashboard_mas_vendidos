@@ -169,7 +169,7 @@ else:
 for i, (index, producto) in enumerate(df_productos.iterrows()):
     col_actual = cols[i % num_columnas]
     with col_actual:
-        with st.container(border=True):
+        with st.container(border=True,height=450):
             # Imagen
             if producto["imagen"] and isinstance(producto["imagen"], str):
                 st.image(producto["imagen"], use_container_width=True)
@@ -209,14 +209,7 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
                 else:
                     st.metric("Ranking", f"#{ranking_actual}", "Nuevo")
 
-            # --- Título con link ---
-            title_html = f"""
-            <a href="{producto['link_publicacion']}" target="_blank" 
-               style="color:#1a73e8; text-decoration:none; font-weight:600;">
-                {producto['titulo']}
-            </a>
-            """
-            st.markdown(title_html, unsafe_allow_html=True)
+            st.markdown(producto['titulo'])
 
             # --- Botón CTA ---
             st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
