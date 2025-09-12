@@ -155,7 +155,6 @@ if selected_cat_secundaria:
 df_anterior = load_data(engine, query_anterior, params=params_anterior)
 
 
-# --- Página Principal ---
 st.title("Productos más vendidos")
 st.markdown(f"Mostrando resultados para la fecha: **{selected_date.strftime('%d/%m/%Y')}**")
 
@@ -163,54 +162,72 @@ if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
 else:
     # --- Visualización en Grilla ---
-    num_columnas = 4 
+    num_columnas = 5 
     cols = st.columns(num_columnas)
 
-for i, (index, producto) in enumerate(df_productos.iterrows()):
-    col_actual = cols[i % num_columnas]
-    with col_actual:
-        with st.container(border=True,height=500):
-            # Imagen
-            if producto["imagen"] and isinstance(producto["imagen"], str):
-                st.image(producto["imagen"], use_container_width=True)
-            else:
-                st.image("https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen", use_container_width=True)
-
-            # --- Calcular métricas ---
-            # Ranking actual
-            ranking_actual = i + 1
-
-            # Buscar producto en día anterior
-            prod_ayer = df_anterior[df_anterior["titulo"] == producto["titulo"]]
-
-            if not prod_ayer.empty:
-                precio_ayer = prod_ayer.iloc[0]["precio"]
-                ranking_ayer = df_anterior[df_anterior["titulo"] == producto["titulo"]].index[0] + 1
-
-                variacion_precio = producto["precio"] - precio_ayer
-                variacion_ranking = ranking_ayer - ranking_actual
-            else:
-                variacion_precio = None
-                variacion_ranking = None
-
-
-            # --- Métricas rápidas ---
-            c1, c2 = st.columns(2)
-            with c1:
-                if variacion_precio is not None:
-                    st.metric("Precio", f"${format_price(producto["precio"])}", f"${format_price(variacion_precio) if variacion_precio is not None else 'N/A'}")    
+    for i, (index, producto) in enumerate(df_productos.iterrows()):
+        col_actual = cols[i % num_columnas]
+        with col_actual:
+            with st.container(border=True, height=500):
+                # Imagen
+                if producto["imagen"] and isinstance(producto["imagen"], str):
+                    st.image(producto["imagen"], use_container_width=True)
                 else:
-                    st.metric("Precio", f"${format_price(producto["precio"])}", "N/A")
-                    st.metric("Precio", f"${producto['precio']:,.0f}", "N/A")
+                    st.image(
+                        "https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen",
+                        use_container_width=True
+                    )
 
-            with c2:
-                if variacion_ranking is not None:
-                    st.metric("Ranking", f"#{ranking_actual}", f"{variacion_ranking:+}")
+                # --- Calcular métricas ---
+                ranking_actual = i + 1
+                prod_ayer = df_anterior[df_anterior["titulo"] == producto["titulo"]]
+
+                if not prod_ayer.empty:
+                    precio_ayer = prod_ayer.iloc[0]["precio"]
+                    ranking_ayer = prod_ayer.index[0] + 1
+
+                    variacion_precio = producto["precio"] - precio_ayer
+                    variacion_ranking = ranking_ayer - ranking_actual
                 else:
-                    st.metric("Ranking", f"#{ranking_actual}", "Nuevo")
+                    variacion_precio = None
+                    variacion_ranking = None
 
-            st.markdown(producto['titulo'])
+                # --- Métricas rápidas ---
+                c1, c2 = st.columns(2)
+                with c1:
+                    if variacion_precio is not None:
+                        st.metric(
+                            label="Precio",
+                            value=f"${format_price(producto['precio'])}",
+                            delta=f"${format_price(variacion_precio)}"
+                        )
+                    else:
+                        st.metric(
+                            label="Precio",
+                            value=f"${format_price(producto['precio'])}",
+                            delta="N/A"
+                        )
 
-            # --- Botón CTA ---
-            st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
+                with c2:
+                    if variacion_ranking is not None:
+                        st.metric(
+                            label="Ranking",
+                            value=f"#{ranking_actual}",
+                            delta=f"{variacion_ranking:+}"
+                        )
+                    else:
+                        st.metric(
+                            label="Ranking",
+                            value=f"#{ranking_actual}",
+                            delta="Nuevo"
+                        )
 
+                # --- Título más compacto ---
+                st.markdown(
+                    f"<div style='font-size:0.85em; line-height:1.2em; "
+                    f"height:2.4em; overflow:hidden;'>{producto['titulo']}</div>",
+                    unsafe_allow_html=True
+                )
+
+                # --- Botón CTA ---
+                st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
