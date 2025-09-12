@@ -169,7 +169,31 @@ else:
 for i, (index, producto) in enumerate(df_productos.iterrows()):
     col_actual = cols[i % num_columnas]
     with col_actual:
-        with st.container(border=True,height=500):
+        with st.container(border=True, height=500):
+            st.markdown(
+                """
+                <style>
+                .card-content {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    height: 100%;
+                    overflow: hidden;
+                    text-align: center;
+                }
+                .card-title {
+                    font-size: 0.85em;
+                    line-height: 1.2em;
+                    height: 2.4em;
+                    overflow: hidden;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # --- Card Layout ---
+            st.markdown("<div class='card-content'>", unsafe_allow_html=True)
             # Imagen
             if producto["imagen"] and isinstance(producto["imagen"], str):
                 st.image(producto["imagen"], use_container_width=True)
@@ -201,7 +225,6 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
                     st.metric("Precio", f"${format_price(producto["precio"])}", f"${format_price(variacion_precio) if variacion_precio is not None else 'N/A'}")    
                 else:
                     st.metric("Precio", f"${format_price(producto["precio"])}", "N/A")
-                    st.metric("Precio", f"${producto['precio']:,.0f}", "N/A")
 
             with c2:
                 if variacion_ranking is not None:
