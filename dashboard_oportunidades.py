@@ -129,6 +129,23 @@ if engine:
 else:
     df_productos = pd.DataFrame()
 
+# --- Consulta del día anterior (para comparación de métricas) ---
+fecha_anterior = selected_date - pd.Timedelta(days=1)
+
+query_anterior = """
+SELECT titulo, precio, categoria_principal, categoria_secundaria
+FROM public.productos_mas_vendidos
+WHERE fecha_extraccion = :fecha
+AND categoria_principal = :cat_p
+"""
+
+params_anterior = {"fecha": fecha_anterior, "cat_p": selected_cat_principal}
+if selected_cat_secundaria:
+    query_anterior += " AND categoria_secundaria = :cat_s"
+    params_anterior["cat_s"] = selected_cat_secundaria
+
+df_anterior = load_data(engine, query_anterior, params=params_anterior)
+
 
 # --- Página Principal ---
 st.title("Productos más vendidos")
@@ -138,67 +155,61 @@ if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
 else:
     # --- Visualización en Grilla ---
-    num_columnas = 5
+    num_columnas = 4
     
     # Crea las columnas una sola vez
     cols = st.columns(num_columnas)
     
     for i, (index, producto) in enumerate(df_productos.iterrows()):
-        # Determina en qué columna va el producto actual
         col_actual = cols[i % num_columnas]
-        
         with col_actual:
-            # Contenedor para cada producto con un borde sutil
             with st.container(border=True):
-                # Genera el texto del ranking
-                ranking_text = f"{i+1}º más vendido"
-                
-                # Combina el ranking y el precio con un estilo de highlight sutil
-                caption_html = f"""
-                <div style="
-                    background-color: rgba(255,119,51,255); /* Naranja muy suave */
-                    border-radius: 3px;
-                    padding: 2px 5px;
-                    display: inline-block;
-                    font-size: 0.9em;
-                    color: #333; /* Texto un poco más oscuro */
-                    margin-top: 5px;
-                ">
-                    <b>{ranking_text}</b> - ${producto['precio']:,.2f}
-                </div>
-                """
-
-                # Imagen del producto
+                # Imagen
                 if producto["imagen"] and isinstance(producto["imagen"], str):
-                    st.image(
-                        producto["imagen"],
-                        use_container_width=True,
-                    )
+                    st.image(producto["imagen"], use_container_width=True)
                 else:
-                    # Placeholder en caso de no tener imagen
-                    st.image(
-                        "https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen",
-                        use_container_width=True,
-                    )
-                
-                # Se coloca el ranking y precio como markdown para asegurar el renderizado del HTML
-                st.markdown(caption_html, unsafe_allow_html=True)
+                    st.image("https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen", use_container_width=True)
 
-                # Título como un enlace clickeable (con tooltip y altura fija)
-                # Se usa CSS para truncar el texto después de 3 líneas y mantener la altura constante.
+                # --- Calcular métricas ---
+                # Ranking actual
+                ranking_actual = i + 1
+
+                # Buscar producto en día anterior
+                prod_ayer = df_anterior[df_anterior["titulo"] == producto["titulo"]]
+
+                if not prod_ayer.empty:
+                    precio_ayer = prod_ayer.iloc[0]["precio"]
+                    ranking_ayer = df_anterior[df_anterior["titulo"] == producto["titulo"]].index[0] + 1
+
+                    variacion_precio = producto["precio"] - precio_ayer
+                    variacion_ranking = ranking_ayer - ranking_actual
+                else:
+                    variacion_precio = None
+                    variacion_ranking = None
+
+                # --- Métricas rápidas ---
+                c1, c2 = st.columns(2)
+                with c1:
+                    if variacion_precio is not None:
+                        st.metric("Precio", f"${producto['precio']:,.0f}", f"{variacion_precio:+,.0f}")
+                    else:
+                        st.metric("Precio", f"${producto['precio']:,.0f}", "N/A")
+
+                with c2:
+                    if variacion_ranking is not None:
+                        st.metric("Ranking", f"#{ranking_actual}", f"{variacion_ranking:+}")
+                    else:
+                        st.metric("Ranking", f"#{ranking_actual}", "Nuevo")
+
+                # --- Título con link ---
                 title_html = f"""
-                <a href="{producto['link_publicacion']}" target="_blank" title="{producto['titulo']}" style="color: inherit; text-decoration: none;">
-                    <div style="
-                        height: 3.6em; /* 1.2em (line-height) * 3 (lines) */
-                        line-height: 1.2em;
-                        overflow: hidden;
-                        display: -webkit-box;
-                        -webkit-line-clamp: 3; /* Número de líneas a mostrar */
-                        -webkit-box-orient: vertical;
-                    ">
-                        {producto['titulo']}
-                    </div>
+                <a href="{producto['link_publicacion']}" target="_blank" 
+                style="color:#1a73e8; text-decoration:none; font-weight:600;">
+                    {producto['titulo']}
                 </a>
                 """
                 st.markdown(title_html, unsafe_allow_html=True)
+
+                # --- Botón CTA ---
+                st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
 
