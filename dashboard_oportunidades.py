@@ -169,31 +169,7 @@ else:
 for i, (index, producto) in enumerate(df_productos.iterrows()):
     col_actual = cols[i % num_columnas]
     with col_actual:
-        with st.container(border=True, height=500):
-            st.markdown(
-                """
-                <style>
-                .card-content {
-                    display: flex;
-                    flex-direction: column;
-                    justify-content: space-between;
-                    height: 100%;
-                    overflow: hidden;
-                    text-align: center;
-                }
-                .card-title {
-                    font-size: 0.85em;
-                    line-height: 1.2em;
-                    height: 2.4em;
-                    overflow: hidden;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-
-            # --- Card Layout ---
-            st.markdown("<div class='card-content'>", unsafe_allow_html=True)
+        with st.container(border=True,height=500):
             # Imagen
             if producto["imagen"] and isinstance(producto["imagen"], str):
                 st.image(producto["imagen"], use_container_width=True)
@@ -232,10 +208,8 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
                 else:
                     st.metric("Ranking", f"#{ranking_actual}", "Nuevo")
 
-            st.markdown(f"<div class='card-title'>{producto['titulo']}</div>", unsafe_allow_html=True)
+            st.markdown(producto['titulo'])
 
             # --- Botón CTA ---
             st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
-            
-            st.markdown("</div>", unsafe_allow_html=True)
 
