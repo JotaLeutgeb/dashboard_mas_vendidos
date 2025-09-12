@@ -201,23 +201,21 @@ else:
                     if variacion_precio is None:
                         st.markdown("🟧 **Nuevo**") 
                     else:
-                         st.metric("Precio", f"${format_price(producto['precio'])}", f"{format_price(variacion_precio)}")
+                        precio_formateado = format_price(producto['precio'])
+                        if len(precio_formateado) > 10:
+                            precio_display = f"<span style='font-size:0.8em;'>${precio_formateado}</span>"
+                            st.markdown(precio_display, unsafe_allow_html=True)
+                        else:
+                            st.metric("Precio", f"${precio_formateado}", f"{format_price(variacion_precio)}")
 
-                with c2:
-                    if variacion_ranking is None:
-                        st.markdown("🟧 **Nuevo**") 
-                    else:
-                        st.metric("Ranking", f"#{ranking_actual}", f"{variacion_ranking:+}")
+                if variacion_ranking is None:
+                    st.markdown("🟧 **Nuevo**")
+                else:
+                    st.metric("Ranking", f"#{ranking_actual}", f"{variacion_ranking:+}".rjust(3))
 
                 # --- Título con link ---
-                title_html = f"""
-                <a href="{producto['titulo']}" target="_blank" 
-                style="color:#1a73e8; text-decoration:none; font-weight:600;">
-                    
-                </a>
-                """
-                st.markdown(title_html, unsafe_allow_html=True)
-
+                st.markdown(f"**{producto['titulo']}**")
+                
                 # --- Botón CTA ---
                 st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
 
