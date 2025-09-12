@@ -155,7 +155,7 @@ if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
 else:
     # --- Visualización en Grilla ---
-    num_columnas = 4
+    num_columnas = 5
     
     # Crea las columnas una sola vez
     cols = st.columns(num_columnas)
