@@ -163,13 +163,13 @@ if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
 else:
     # --- Visualización en Grilla ---
-    num_columnas = 4 
+    num_columnas = 5
     cols = st.columns(num_columnas)
 
 for i, (index, producto) in enumerate(df_productos.iterrows()):
     col_actual = cols[i % num_columnas]
     with col_actual:
-        with st.container(border=True,height=500):
+        with st.container(border=True,height=550):
             # Imagen
             if producto["imagen"] and isinstance(producto["imagen"], str):
                 st.image(producto["imagen"], use_container_width=True)
@@ -195,7 +195,7 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
 
 
             # --- Métricas rápidas ---
-            c1, c2 = st.columns(2)
+            c1, c2 = st.columns([3, 1])
             with c1:
                 if variacion_precio is not None:
                     st.metric("Precio", f"${format_price(producto["precio"])}", f"${format_price(variacion_precio) if variacion_precio is not None else 'N/A'}")    
