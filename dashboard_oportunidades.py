@@ -55,6 +55,14 @@ def load_data(_engine, query, params=None):
         logging.error(f"Error en la consulta: {query} - {e}")
         return pd.DataFrame()
 
+def format_price(value: float) -> str:
+    """
+    Formatea un número como precio en ARS:
+    miles con punto y decimales con coma.
+    Ejemplo: 1234567.89 -> '1.234.568'
+    """
+    return f"{value:,.0f}".replace(",", ".")
+
 # --- Sidebar de Filtros ---
 
 st.sidebar.title("📡 Radar de Oportunidad")
@@ -163,7 +171,7 @@ else:
     for i, (index, producto) in enumerate(df_productos.iterrows()):
         col_actual = cols[i % num_columnas]
         with col_actual:
-            with st.container(border=True):
+            with st.container(border=True, height=450):
                 # Imagen
                 if producto["imagen"] and isinstance(producto["imagen"], str):
                     st.image(producto["imagen"], use_container_width=True)
@@ -190,22 +198,22 @@ else:
                 # --- Métricas rápidas ---
                 c1, c2 = st.columns(2)
                 with c1:
-                    if variacion_precio is not None:
-                        st.metric("Precio", f"${producto['precio']:,.0f}", f"{variacion_precio:+,.0f}")
+                    if variacion_precio is None:
+                        st.markdown("🟧 **Nuevo**") 
                     else:
-                        st.metric("Precio", f"${producto['precio']:,.0f}", "N/A")
+                         st.metric("Precio", f"${format_price(producto['precio'])}", f"{format_price(variacion_precio)}")
 
                 with c2:
-                    if variacion_ranking is not None:
-                        st.metric("Ranking", f"#{ranking_actual}", f"{variacion_ranking:+}")
+                    if variacion_ranking is None:
+                        st.markdown("🟧 **Nuevo**") 
                     else:
-                        st.metric("Ranking", f"#{ranking_actual}", "Nuevo")
+                        st.metric("Ranking", f"#{ranking_actual}", f"{variacion_ranking:+}")
 
                 # --- Título con link ---
                 title_html = f"""
-                <a href="{producto['link_publicacion']}" target="_blank" 
+                <a href="{producto['titulo']}" target="_blank" 
                 style="color:#1a73e8; text-decoration:none; font-weight:600;">
-                    {producto['titulo']}
+                    
                 </a>
                 """
                 st.markdown(title_html, unsafe_allow_html=True)
