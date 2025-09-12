@@ -163,13 +163,13 @@ if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
 else:
     # --- Visualización en Grilla ---
-    num_columnas = 5 
+    num_columnas = 4 
     cols = st.columns(num_columnas)
 
 for i, (index, producto) in enumerate(df_productos.iterrows()):
     col_actual = cols[i % num_columnas]
     with col_actual:
-        with st.container(border=True,height=450):
+        with st.container(border=True,height=500):
             # Imagen
             if producto["imagen"] and isinstance(producto["imagen"], str):
                 st.image(producto["imagen"], use_container_width=True)
