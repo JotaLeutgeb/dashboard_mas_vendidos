@@ -232,8 +232,10 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
                 else:
                     st.metric("Ranking", f"#{ranking_actual}", "Nuevo")
 
-            st.markdown(producto['titulo'])
+            st.markdown(f"<div class='card-title'>{producto['titulo']}</div>", unsafe_allow_html=True)
 
             # --- Botón CTA ---
             st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
