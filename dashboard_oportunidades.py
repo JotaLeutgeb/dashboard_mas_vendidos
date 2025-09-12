@@ -204,9 +204,9 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
 
             with c2:
                 if variacion_ranking is not None:
-                    st.metric("Ranking", f"{ranking_actual}", f"{variacion_ranking:+}")
+                    st.metric("Top", f"{ranking_actual}", f"{variacion_ranking:+}")
                 else:
-                    st.metric("Ranking", f"{ranking_actual}", "Nuevo")
+                    st.metric("Top", f"{ranking_actual}", "Nuevo")
 
             st.markdown(producto['titulo'])
 
