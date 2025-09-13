@@ -169,7 +169,7 @@ else:
 for i, (index, producto) in enumerate(df_productos.iterrows()):
     col_actual = cols[i % num_columnas]
     with col_actual:
-        with st.container(border=True,height=500):
+        with st.container(border=True,height=450):
             # Imagen
             if producto["imagen"] and isinstance(producto["imagen"], str):
                 st.image(producto["imagen"], use_container_width=True)
