@@ -255,7 +255,7 @@ else:
                     # --- LÓGICA MEJORADA PARA MOSTRAR EL RANKING ---
                     delta_ranking_texto = ""
                     if variacion_ranking is None:
-                        delta_ranking_texto = "New"
+                        delta_ranking_texto = "IN"
                     elif variacion_ranking == 0:
                         # Si no hay variación, no mostramos delta para evitar el "0"
                         delta_ranking_texto = None # O podrías poner "Sin cambios"
