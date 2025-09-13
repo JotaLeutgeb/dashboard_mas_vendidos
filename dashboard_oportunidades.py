@@ -214,5 +214,19 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
                     st.metric("Top", f"{ranking_actual}", "Nuevo")
 
             # Título (con link)
-            st.markdown(f"##### [{producto['titulo']}]({producto['link_publicacion']})", unsafe_allow_html=True)
+            titulo_completo = producto['titulo']
+            titulo_mostrado = (titulo_completo[:60] + '...') if len(titulo_completo) > 60 else titulo_completo
+            st.markdown(f"""
+                <h5 style="margin: 0; padding: 0;">
+                    <a 
+                        href="{producto['link_publicacion']}" 
+                        target="_blank" 
+                        title="{titulo_completo}"
+                        style="text-decoration: none; color: inherit;"
+                    >
+                        {titulo_mostrado}
+                    </a>
+                </h5>
+            """, unsafe_allow_html=True)
+
 
