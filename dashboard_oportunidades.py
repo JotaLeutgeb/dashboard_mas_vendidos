@@ -4,6 +4,7 @@ from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 from datetime import datetime
 import logging
+from typing import List, Dict, Any
 
 # Configuración básica de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
