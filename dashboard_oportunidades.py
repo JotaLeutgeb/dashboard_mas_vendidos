@@ -231,8 +231,6 @@ else:
                 else:
                     st.image("https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen", use_container_width=True)
 
-                # --- CORRECCIÓN: Lógica duplicada eliminada de aquí ---
-
                 # --- Métricas rápidas ---
                 c1, c2 = st.columns([7, 3])
                 with c1:
