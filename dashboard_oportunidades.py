@@ -213,8 +213,6 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
                 else:
                     st.metric("Top", f"{ranking_actual}", "Nuevo")
 
-            st.markdown(producto['titulo'])
-
-            # --- Botón CTA ---
-            st.link_button("🔗 Ver en MercadoLibre", producto["link_publicacion"])
+            # Título (con link)
+            st.markdown(f"### [{producto['titulo']}]({producto['link_publicacion']})", unsafe_allow_html=True)
 
