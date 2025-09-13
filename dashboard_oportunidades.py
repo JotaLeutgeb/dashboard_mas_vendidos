@@ -16,6 +16,20 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown("""
+    <style>
+    /* Elimina el padding superior del contenedor principal */
+    .block-container {
+        padding-top: 0rem;
+    }
+    /* Elimina el padding superior del contenido de la barra lateral */
+    [data-testid="stSidebarUserContent"] {
+        padding-top: 0rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+
 # --- Conexión a la Base de Datos (usando st.secrets) ---
 
 @st.cache_resource
