@@ -111,11 +111,14 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
 st.sidebar.title("📡 Radar de Oportunidad")
 st.sidebar.header("Filtros")
 
+fechas = load_data(engine, "SELECT DISTINCT fecha_extraccion FROM public.productos_mas_vendidos ORDER BY fecha_extraccion DESC;")
+if fechas.empty:   
+    st.error("No se pudieron cargar las fechas desde la base de datos.") 
+
 # Filtro de fecha
-selected_date = st.sidebar.date_input(
-    "Fecha de extracción",
-    value=datetime.today()
-)
+fecha_maxima = fechas['fecha_extraccion'].max() if not fechas.empty else datetime.today().date()
+fecha_minima = fechas['fecha_extraccion'].min() if not fechas.empty else datetime.today().date() - timedelta(days=30)
+fecha_seleccionada = st.sidebar.date_input("Seleccione una Fecha", value=fecha_maxima, min_value=fecha_minima, max_value=fecha_maxima, format="DD/MM/YYYY")
 
 # Inicializar variables de selección
 selected_cat_principal = None
@@ -146,7 +149,6 @@ if engine:
 # --- Lógica de la consulta principal (Día seleccionado) ---
 df_productos = pd.DataFrame()
 if engine and selected_cat_principal:
-    # >>> CORRECCIÓN: Añadida la columna 'posicion' y 'link_publicacion' para asegurar que existen.
     query_base = """
         SELECT posicion, titulo, precio, imagen, link_publicacion 
         FROM public.productos_mas_vendidos 
