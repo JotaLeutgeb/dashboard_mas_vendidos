@@ -197,20 +197,31 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
             # --- Métricas rápidas ---
             c1, c2 = st.columns([7, 3])
             with c1:
-                # Solo mostrar la métrica si el precio es válido Y existe una variación real.
-                if producto['precio'] and variacion_precio != 0:
-                    st.metric(
-                        label="Precio",
-                        value=f"${format_price(producto['precio'])}",
-                        delta=variacion_precio  # Dejar que Streamlit gestione el formato y color
-                    )
-                # Si la condición no se cumple, no se ejecuta nada, dejando el espacio en blanco.
+            # Paso 1: Asegurarnos de que el producto tiene un precio válido.
+                if producto['precio']:
+                    # Paso 2: Decidir qué mostrar en el delta.
+                    if variacion_precio != 0:
+                        # Hay variación, mostrarla numéricamente.
+                        st.metric(
+                            label="Precio",
+                            value=f"${format_price(producto['precio'])}",
+                            delta=variacion_precio
+                        )
+                    else:
+                        # No hay variación, mostrar el precio con un delta informativo.
+                        st.metric(
+                            label="Precio",
+                            value=f"${format_price(producto['precio'])}",
+                            delta="Sin cambios",
+                            delta_color="off"  # 'off' para que el delta no se vea rojo o verde
+                        )
 
             with c2:
                 if variacion_ranking is not None:
                     st.metric("Top", f"{ranking_actual}", f"{variacion_ranking:+}")
                 else:
                     st.metric("Top", f"{ranking_actual}", "Nuevo")
+
 
 
             # Título (con link)
