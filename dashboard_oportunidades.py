@@ -63,6 +63,76 @@ def format_price(value: float) -> str:
     """
     return f"{value:,.0f}".replace(",", ".")
 
+def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Analiza los productos de hoy y ayer para calcular la variación de ranking y precio.
+
+    Utiliza el 'link_publicacion' como identificador único para cada producto.
+
+    Args:
+        productos_hoy: Una lista de diccionarios, donde cada uno es un producto extraído hoy.
+                       Debe contener 'link_publicacion', 'posicion' y 'precio'.
+        productos_ayer: La lista de productos extraída ayer, con la misma estructura.
+
+    Returns:
+        Una lista de los productos de hoy, con dos nuevas claves añadidas a cada diccionario:
+        - 'variacion_ranking': La diferencia de puestos (positivo si subió, negativo si bajó).
+        - 'variacion_precio': La diferencia de precios.
+        - 'ranking_anterior': El puesto que ocupaba ayer (None si es nuevo).
+    """
+    
+    # Para búsquedas rápidas, convertimos la lista de ayer en un DataFrame de pandas
+    # indexado por el link, que es nuestro identificador único.
+    if not productos_ayer:
+        # Si no hay datos de ayer, todos los productos son nuevos.
+        for p in productos_hoy:
+            p['variacion_ranking'] = None # 'None' indica que es nuevo
+            p['variacion_precio'] = 0
+            p['ranking_anterior'] = None
+        return productos_hoy
+
+    df_ayer = pd.DataFrame(productos_ayer)
+    df_ayer.set_index('link_publicacion', inplace=True)
+
+    productos_enriquecidos = []
+
+    for producto_hoy in productos_hoy:
+        link = producto_hoy['link_publicacion']
+        ranking_actual = producto_hoy['posicion']
+        precio_actual = producto_hoy['precio']
+
+        # Buscamos si el producto de hoy existía ayer
+        if link in df_ayer.index:
+            # --- El producto existía ayer ---
+            producto_anterior = df_ayer.loc[link]
+            ranking_anterior = int(producto_anterior['posicion'])
+            precio_anterior = float(producto_anterior['precio'])
+
+            # --- CÁLCULO CORRECTO DE LA VARIACIÓN ---
+            # La lógica es: Ranking Anterior - Ranking Actual
+            # Ejemplo: Ayer puesto 5, hoy puesto 2 -> 5 - 2 = 3 (Subió 3 puestos)
+            # Ejemplo: Ayer puesto 2, hoy puesto 5 -> 2 - 5 = -3 (Bajó 3 puestos)
+            # Ejemplo: Ayer puesto 3, hoy puesto 3 -> 3 - 3 = 0 (Sin cambios)
+            variacion_ranking = ranking_anterior - ranking_actual
+            
+            variacion_precio = precio_actual - precio_anterior
+
+            # Guardamos los datos para la visualización
+            producto_hoy['variacion_ranking'] = variacion_ranking
+            producto_hoy['variacion_precio'] = variacion_precio
+            producto_hoy['ranking_anterior'] = ranking_anterior
+        
+        else:
+            # --- El producto es nuevo ---
+            producto_hoy['variacion_ranking'] = None  # Usamos None para identificarlo como "Nuevo"
+            producto_hoy['variacion_precio'] = 0
+            producto_hoy['ranking_anterior'] = None
+
+        productos_enriquecidos.append(producto_hoy)
+
+    return productos_enriquecidos
+
+
 # --- Sidebar de Filtros ---
 
 st.sidebar.title("📡 Radar de Oportunidad")
@@ -166,7 +236,17 @@ else:
     num_columnas = 5
     cols = st.columns(num_columnas)
 
-for i, (index, producto) in enumerate(df_productos.iterrows()):
+productos_ayer = df_anterior.to_dict(orient='records')
+productos_hoy = df_productos.reset_index().to_dict(orient='records')
+
+productos_analizados = calcular_variaciones(productos_hoy, productos_ayer)
+
+for i, producto in enumerate(productos_analizados):
+    ranking_actual = producto['posicion']
+    variacion_ranking = producto['variacion_ranking']
+    precio_actual = producto['precio']
+    variacion_precio = producto['variacion_precio']
+
     col_actual = cols[i % num_columnas]
     with col_actual:
         with st.container(border=True,height=450):
@@ -198,29 +278,37 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
             c1, c2 = st.columns([7, 3])
             with c1:
             # Paso 1: Asegurarnos de que el producto tiene un precio válido.
-                if producto['precio']:
-                    # Paso 2: Decidir qué mostrar en el delta.
-                    if variacion_precio != 0:
-                        # Hay variación, mostrarla numéricamente.
-                        st.metric(
-                            label="Precio",
-                            value=f"${format_price(producto['precio'])}",
-                            delta=variacion_precio
-                        )
-                    else:
-                        # No hay variación, mostrar el precio con un delta informativo.
-                        st.metric(
-                            label="Precio",
-                            value=f"${format_price(producto['precio'])}",
-                            delta="Sin cambios",
-                            delta_color="off"  # 'off' para que el delta no se vea rojo o verde
-                        )
+                if precio_actual:
+                    st.metric(
+                        label="Precio",
+                        value=f"${format_price(precio_actual)}",
+                        delta=round(variacion_precio, 2) if variacion_precio != 0 else None)
+                else:
+                    # No hay variación, mostrar el precio con un delta informativo.
+                    st.metric(
+                        label="Precio",
+                        value=f"${format_price(producto['precio'])}",
+                        delta="Sin cambios",
+                        delta_color="off"  # 'off' para que el delta no se vea rojo o verde
+                    )
 
             with c2:
-                if variacion_ranking is not None:
-                    st.metric("Top", f"{ranking_actual}", f"{variacion_ranking:+}")
+                # --- LÓGICA MEJORADA PARA MOSTRAR EL RANKING ---
+                delta_ranking_texto = ""
+                if variacion_ranking is None:
+                    delta_ranking_texto = "Nuevo"
+                elif variacion_ranking == 0:
+                    # Si no hay variación, no mostramos delta para evitar el "0"
+                    delta_ranking_texto = None # O podrías poner "Sin cambios"
                 else:
-                    st.metric("Top", f"{ranking_actual}", "Nuevo")
+                    # El f-string con '+' se encarga de poner el signo
+                    delta_ranking_texto = f"{variacion_ranking:+#,}"
+
+                st.metric(
+                    label="Ranking Top",
+                    value=f"#{ranking_actual}",
+                    delta=delta_ranking_texto
+                )
 
 
 
