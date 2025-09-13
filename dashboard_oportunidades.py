@@ -250,8 +250,8 @@ else:
                         delta_ranking_texto = f"{variacion_ranking:+#,}"
 
                     st.metric(
-                        label="Ranking Top",
-                        value=f"#{ranking_actual}",
+                        label="Top",
+                        value=f"{ranking_actual}",
                         delta=delta_ranking_texto
                     )
 
