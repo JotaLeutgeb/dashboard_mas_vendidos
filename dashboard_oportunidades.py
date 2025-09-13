@@ -20,11 +20,11 @@ st.markdown("""
     <style>
     /* Elimina el padding superior del contenedor principal */
     .block-container {
-        padding-top: 1rem;
+        padding-top: 1.1rem;
     }
     /* Elimina el padding superior del contenido de la barra lateral */
     [data-testid="stSidebarUserContent"] {
-        padding-top: -2rem;
+        padding-top: 0rem;
     }
     </style>
 """, unsafe_allow_html=True)
