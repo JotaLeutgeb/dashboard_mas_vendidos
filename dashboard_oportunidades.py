@@ -214,5 +214,5 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
                     st.metric("Top", f"{ranking_actual}", "Nuevo")
 
             # Título (con link)
-            st.markdown(f"### [{producto['titulo']}]({producto['link_publicacion']})", unsafe_allow_html=True)
+            st.markdown(f"##### [{producto['titulo']}]({producto['link_publicacion']})", unsafe_allow_html=True)
 
