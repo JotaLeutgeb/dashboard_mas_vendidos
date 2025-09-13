@@ -198,9 +198,17 @@ for i, (index, producto) in enumerate(df_productos.iterrows()):
             c1, c2 = st.columns([7, 3])
             with c1:
                 if variacion_precio is not None:
-                    st.metric("Precio", f"${format_price(producto["precio"])}", f"${format_price(variacion_precio) if variacion_precio is not None else 'N/A'}")    
+                    st.metric(
+                        "Precio",
+                        f"${format_price(producto['precio'])}",  # precio actual con formato
+                        delta=variacion_precio  # número crudo, Streamlit maneja color y flechas
+                    )
                 else:
-                    st.metric("Precio", f"${format_price(producto["precio"])}", "N/A")
+                    st.metric(
+                        "Precio",
+                        f"${format_price(producto['precio'])}",
+                        "N/A"
+                    )
 
             with c2:
                 if variacion_ranking is not None:
