@@ -155,7 +155,7 @@ if engine and selected_cat_principal:
         WHERE fecha_extraccion = :fecha 
         AND categoria_principal = :cat_p
     """
-    params = {"fecha": selected_date, "cat_p": selected_cat_principal}
+    params = {"fecha": fecha_seleccionada, "cat_p": selected_cat_principal}
 
     if selected_cat_secundaria:
         query_base += " AND categoria_secundaria = :cat_s"
@@ -168,7 +168,7 @@ if engine and selected_cat_principal:
 # --- Consulta del día anterior (para comparación de métricas) ---
 df_anterior = pd.DataFrame()
 if engine and selected_cat_principal:
-    fecha_anterior = selected_date - timedelta(days=1)
+    fecha_anterior = fecha_seleccionada - timedelta(days=1)
     
     # >>> CORRECCIÓN CLAVE: Añadidas 'link_publicacion' y 'posicion' a la consulta.
     query_anterior = """
@@ -188,7 +188,7 @@ if engine and selected_cat_principal:
 
 # --- Página Principal ---
 st.title("Productos más vendidos")
-st.markdown(f"Mostrando resultados para la fecha: **{selected_date.strftime('%d/%m/%Y')}**")
+st.markdown(f"Mostrando resultados para la fecha: **{fecha_seleccionada.strftime('%d/%m/%Y')}**")
 
 if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
