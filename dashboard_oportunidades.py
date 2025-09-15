@@ -228,7 +228,7 @@ else:
     for i, producto in enumerate(productos_analizados):
         # Usar los datos ya calculados por la función
         ranking_actual = producto['posicion']
-        variacion_ranking = productos_analizados['variacion_ranking']
+        variacion_ranking = producto['variacion_ranking']
         precio_actual = producto['precio']
         variacion_precio = producto['variacion_precio']
 
