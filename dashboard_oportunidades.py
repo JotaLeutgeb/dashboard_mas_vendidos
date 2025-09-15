@@ -139,33 +139,6 @@ selected_cat_principal = None
 selected_cat_secundaria = None
 
 df_anterior = pd.DataFrame()
-if engine and selected_cat_principal:
-    fecha_anterior = fecha_seleccionada - timedelta(days=1)
-    
-    query_anterior = """
-        SELECT posicion, titulo, precio, link_publicacion
-        FROM public.productos_mas_vendidos
-        WHERE fecha_extraccion = :fecha
-        AND categoria_principal = :cat_p
-    """
-    params_anterior = {"fecha": fecha_anterior, "cat_p": selected_cat_principal}
-
-    if selected_cat_secundaria:
-        query_anterior += " AND categoria_secundaria = :cat_s"
-        params_anterior["cat_s"] = selected_cat_secundaria
-    
-    df_anterior = load_data(engine, query_anterior, params=params_anterior)
-
-    # --- INICIO DEL BLOQUE DE DEPURACIÓN ---
-    with st.expander("🔍 Información de Depuración: Consulta del Día Anterior"):
-        st.write("Fecha anterior calculada para la consulta:", fecha_anterior)
-        st.write("Parámetros enviados a la consulta:", params_anterior)
-        st.write(f"La consulta para el día anterior encontró **{len(df_anterior)}** filas.")
-        if df_anterior.empty:
-            st.warning("El DataFrame del día anterior está vacío. Esto causa que todos los productos se muestren como 'IN'.")
-        else:
-            st.success("Se encontraron datos del día anterior. Mostrando una vista previa:")
-            st.dataframe(df_anterior.head())
 
 # Filtros de categoría (se cargan solo si la conexión a la BD es exitosa)
 if engine:
@@ -242,6 +215,35 @@ if engine and selected_cat_principal:
 st.title("Productos más vendidos")
 st.markdown(f"Mostrando resultados para la fecha: **{fecha_seleccionada.strftime('%d/%m/%Y')}**")
 
+if engine and selected_cat_principal:
+    fecha_anterior = fecha_seleccionada - timedelta(days=1)
+    
+    query_anterior = """
+        SELECT posicion, titulo, precio, link_publicacion
+        FROM public.productos_mas_vendidos
+        WHERE fecha_extraccion = :fecha
+        AND categoria_principal = :cat_p
+    """
+    params_anterior = {"fecha": fecha_anterior, "cat_p": selected_cat_principal}
+
+    if selected_cat_secundaria:
+        query_anterior += " AND categoria_secundaria = :cat_s"
+        params_anterior["cat_s"] = selected_cat_secundaria
+    
+    df_anterior = load_data(engine, query_anterior, params=params_anterior)
+
+    # --- INICIO DEL BLOQUE DE DEPURACIÓN ---
+    with st.expander("🔍 Información de Depuración: Consulta del Día Anterior"):
+        st.write("Fecha anterior calculada para la consulta:", fecha_anterior)
+        st.write("Parámetros enviados a la consulta:", params_anterior)
+        st.write(f"La consulta para el día anterior encontró **{len(df_anterior)}** filas.")
+        if df_anterior.empty:
+            st.warning("El DataFrame del día anterior está vacío. Esto causa que todos los productos se muestren como 'IN'.")
+        else:
+            st.success("Se encontraron datos del día anterior. Mostrando una vista previa:")
+            st.dataframe(df_anterior.head())
+
+
 if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
 else:
@@ -265,9 +267,9 @@ else:
         with col_actual:
             with st.container(border=True, height=470):
                 if producto.get("imagen") and isinstance(producto["imagen"], str):
-                    st.image(producto["imagen"], use_container_width=True)
+                    st.image(producto["imagen"], width='stretch')
                 else:
-                    st.image("https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen", use_container_width=True)
+                    st.image("https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen", width='stretch')
 
                 # --- Métricas rápidas ---
                 c1, c2 = st.columns([7, 3])
