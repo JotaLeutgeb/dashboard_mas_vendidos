@@ -80,43 +80,100 @@ def format_price(value: float) -> str:
 
 def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Analiza los productos de hoy y ayer para calcular la variación de ranking y precio.
-    Utiliza el 'link_publicacion' como identificador único para cada producto.
+    Version robusta:
+    - Normaliza precios (quita separadores de miles).
+    - Intenta match por id_producto; si no existe, hace fallback por link_publicacion.
+    - Devuelve la lista completa (no devuelve prematuramente).
     """
+    def _parse_price(x):
+        if x is None:
+            return None
+        # si ya es numérico
+        try:
+            return float(x)
+        except Exception:
+            s = str(x).strip()
+            # quitar todo lo que no sea dígito (asumimos precios enteros)
+            digits = re.sub(r'[^\d]', '', s)
+            return float(digits) if digits else None
+
     if not productos_ayer:
         for p in productos_hoy:
             p['variacion_ranking'] = None
-            p['variacion_precio'] = 0
+            p['variacion_precio'] = None
             p['ranking_anterior'] = None
         return productos_hoy
 
-    df_ayer = pd.DataFrame(productos_ayer)
-    df_ayer.set_index('id_producto', inplace=True)
+    # DataFrame de ayer (copia para no mutar)
+    df_ayer = pd.DataFrame(productos_ayer).copy()
+    # Aseguramos columnas mínimas
+    if 'id_producto' not in df_ayer.columns:
+        df_ayer['id_producto'] = None
+    if 'link_publicacion' not in df_ayer.columns:
+        df_ayer['link_publicacion'] = None
+    if 'posicion' not in df_ayer.columns:
+        df_ayer['posicion'] = None
+    if 'precio' not in df_ayer.columns:
+        df_ayer['precio'] = None
+
+    # Normalizamos precio en df_ayer para comparaciones rápidas
+    df_ayer['precio_norm'] = df_ayer['precio'].apply(_parse_price)
 
     productos_enriquecidos = []
     for producto_hoy in productos_hoy:
-        pid = producto_hoy['id_producto']
-        ranking_actual = producto_hoy['posicion']
-        precio_actual = producto_hoy['precio']
+        pid = producto_hoy.get('id_producto')
+        link = producto_hoy.get('link_publicacion')
+        ranking_actual = producto_hoy.get('posicion')
+        precio_actual_raw = producto_hoy.get('precio')
+        precio_actual = _parse_price(precio_actual_raw)
 
-        if pid in df_ayer.index:
-            producto_anterior = df_ayer.loc[pid]
-            ranking_anterior = int(producto_anterior['posicion'])
-            precio_anterior = float(producto_anterior['precio'])
-            
-            variacion_ranking = ranking_anterior - ranking_actual
-            variacion_precio = precio_actual - precio_anterior
-            
-            producto_hoy['variacion_ranking'] = variacion_ranking
-            producto_hoy['variacion_precio'] = variacion_precio
-            producto_hoy['ranking_anterior'] = ranking_anterior
+        producto_hoy['variacion_ranking'] = None
+        producto_hoy['variacion_precio'] = None
+        producto_hoy['ranking_anterior'] = None
+
+        # Intentamos match por id_producto (si existe)
+        fila_anterior = None
+        if pid:
+            mask = df_ayer['id_producto'] == pid
+            if mask.any():
+                fila_anterior = df_ayer[mask].iloc[0]
+
+        # Fallback por link_publicacion si no hay id o no se encontró
+        if fila_anterior is None and link:
+            mask2 = df_ayer['link_publicacion'] == link
+            if mask2.any():
+                fila_anterior = df_ayer[mask2].iloc[0]
+
+        if fila_anterior is not None:
+            # convertir valores previos
+            try:
+                ranking_anterior = int(fila_anterior.get('posicion')) if fila_anterior.get('posicion') is not None else None
+            except Exception:
+                ranking_anterior = None
+
+            precio_anterior = fila_anterior.get('precio_norm')
+
+            # calcular variaciones si tenemos datos válidos
+            if ranking_anterior is not None and ranking_actual is not None:
+                producto_hoy['variacion_ranking'] = ranking_anterior - ranking_actual
+                producto_hoy['ranking_anterior'] = ranking_anterior
+            else:
+                producto_hoy['variacion_ranking'] = None
+
+            if precio_anterior is not None and precio_actual is not None:
+                producto_hoy['variacion_precio'] = precio_actual - precio_anterior
+            else:
+                producto_hoy['variacion_precio'] = None
         else:
+            # no match -> consideramos nuevo
             producto_hoy['variacion_ranking'] = None
-            producto_hoy['variacion_precio'] = 0
+            producto_hoy['variacion_precio'] = None
             producto_hoy['ranking_anterior'] = None
-        
+
         productos_enriquecidos.append(producto_hoy)
+
     return productos_enriquecidos
+
 
 
 # --- Sidebar de Filtros ---
@@ -174,11 +231,14 @@ if engine:
 df_productos = pd.DataFrame()
 if engine and selected_cat_principal:
     query_base = """
-        SELECT posicion, titulo, precio, imagen, link_publicacion, id_producto
-        FROM public.productos_mas_vendidos 
-        WHERE fecha_extraccion = :fecha 
-        AND categoria_principal = :cat_p
+    SELECT posicion, titulo, precio, imagen, link_publicacion, id_producto
+    FROM public.productos_mas_vendidos 
+    WHERE fecha_extraccion = :fecha 
+    AND categoria_principal = :cat_p
     """
+    # ... si subcategoria: add " AND categoria_secundaria = :cat_s"
+    query_base += " ORDER BY posicion ASC;"
+
     params = {"fecha": fecha_seleccionada, "cat_p": selected_cat_principal}
 
     if selected_cat_secundaria:
@@ -200,6 +260,7 @@ if engine and selected_cat_principal:
         WHERE fecha_extraccion = :fecha
         AND categoria_principal = :cat_p
     """
+
     params_anterior = {"fecha": fecha_anterior, "cat_p": selected_cat_principal}
 
     if selected_cat_secundaria:
