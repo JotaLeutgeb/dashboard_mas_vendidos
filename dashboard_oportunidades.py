@@ -231,23 +231,19 @@ if engine:
 df_productos = pd.DataFrame()
 if engine and selected_cat_principal:
     query_base = """
-    SELECT posicion, titulo, precio, imagen, link_publicacion, id_producto
-    FROM public.productos_mas_vendidos 
-    WHERE fecha_extraccion = :fecha 
-    AND categoria_principal = :cat_p
+        SELECT posicion, titulo, precio, imagen, link_publicacion, id_producto
+        FROM public.productos_mas_vendidos 
+        WHERE fecha_extraccion = :fecha 
+        AND categoria_principal = :cat_p
     """
-    # ... si subcategoria: add " AND categoria_secundaria = :cat_s"
-    query_base += " ORDER BY posicion ASC;"
-
     params = {"fecha": fecha_seleccionada, "cat_p": selected_cat_principal}
 
     if selected_cat_secundaria:
         query_base += " AND categoria_secundaria = :cat_s"
         params["cat_s"] = selected_cat_secundaria
 
-    # >>> CORRECCIÓN: Ordenar por 'posicion' para que el ranking sea correcto.
-    query_base += " ORDER BY posicion ASC;"
-    df_productos = load_data(engine, query_base, params=params)
+    # SOLO un ORDER BY, al final de todo
+    query_base += " ORDER BY posicion ASC"
 
 # --- Consulta del día anterior (para comparación de métricas) ---
 df_anterior = pd.DataFrame()
@@ -260,14 +256,14 @@ if engine and selected_cat_principal:
         WHERE fecha_extraccion = :fecha
         AND categoria_principal = :cat_p
     """
-
     params_anterior = {"fecha": fecha_anterior, "cat_p": selected_cat_principal}
 
     if selected_cat_secundaria:
         query_anterior += " AND categoria_secundaria = :cat_s"
         params_anterior["cat_s"] = selected_cat_secundaria
-    
-    df_anterior = load_data(engine, query_anterior, params=params_anterior)
+
+    query_anterior += " ORDER BY posicion ASC"
+
 
 
 # --- Página Principal ---
