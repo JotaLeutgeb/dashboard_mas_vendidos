@@ -116,7 +116,7 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
             producto_hoy['ranking_anterior'] = None
         
         productos_enriquecidos.append(producto_hoy)
-        return productos_enriquecidos
+    return productos_enriquecidos
 
 
 # --- Sidebar de Filtros ---
@@ -194,7 +194,6 @@ df_anterior = pd.DataFrame()
 if engine and selected_cat_principal:
     fecha_anterior = fecha_seleccionada - timedelta(days=1)
     
-    # >>> CORRECCIÓN CLAVE: Añadidas 'link_publicacion' y 'posicion' a la consulta.
     query_anterior = """
         SELECT posicion, titulo, precio, imagen, link_publicacion, id_producto
         FROM public.productos_mas_vendidos
