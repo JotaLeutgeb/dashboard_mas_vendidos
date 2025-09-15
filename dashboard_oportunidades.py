@@ -5,6 +5,7 @@ from urllib.parse import quote_plus
 from datetime import datetime, timedelta
 import logging
 from typing import List, Dict, Any
+import re
 
 # Configuración básica de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -80,20 +81,16 @@ def format_price(value: float) -> str:
 
 def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
-    Version robusta:
-    - Normaliza precios (quita separadores de miles).
-    - Intenta match por id_producto; si no existe, hace fallback por link_publicacion.
-    - Devuelve la lista completa (no devuelve prematuramente).
+    Analiza los productos de hoy y ayer para calcular la variación de ranking y precio.
+    Usa id_producto como identificador estable y fallback en link_publicacion.
     """
     def _parse_price(x):
         if x is None:
             return None
-        # si ya es numérico
         try:
             return float(x)
         except Exception:
             s = str(x).strip()
-            # quitar todo lo que no sea dígito (asumimos precios enteros)
             digits = re.sub(r'[^\d]', '', s)
             return float(digits) if digits else None
 
@@ -104,9 +101,7 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
             p['ranking_anterior'] = None
         return productos_hoy
 
-    # DataFrame de ayer (copia para no mutar)
     df_ayer = pd.DataFrame(productos_ayer).copy()
-    # Aseguramos columnas mínimas
     if 'id_producto' not in df_ayer.columns:
         df_ayer['id_producto'] = None
     if 'link_publicacion' not in df_ayer.columns:
@@ -116,7 +111,6 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
     if 'precio' not in df_ayer.columns:
         df_ayer['precio'] = None
 
-    # Normalizamos precio en df_ayer para comparaciones rápidas
     df_ayer['precio_norm'] = df_ayer['precio'].apply(_parse_price)
 
     productos_enriquecidos = []
@@ -131,21 +125,18 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
         producto_hoy['variacion_precio'] = None
         producto_hoy['ranking_anterior'] = None
 
-        # Intentamos match por id_producto (si existe)
         fila_anterior = None
         if pid:
             mask = df_ayer['id_producto'] == pid
             if mask.any():
                 fila_anterior = df_ayer[mask].iloc[0]
 
-        # Fallback por link_publicacion si no hay id o no se encontró
         if fila_anterior is None and link:
             mask2 = df_ayer['link_publicacion'] == link
             if mask2.any():
                 fila_anterior = df_ayer[mask2].iloc[0]
 
         if fila_anterior is not None:
-            # convertir valores previos
             try:
                 ranking_anterior = int(fila_anterior.get('posicion')) if fila_anterior.get('posicion') is not None else None
             except Exception:
@@ -153,27 +144,15 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
 
             precio_anterior = fila_anterior.get('precio_norm')
 
-            # calcular variaciones si tenemos datos válidos
             if ranking_anterior is not None and ranking_actual is not None:
                 producto_hoy['variacion_ranking'] = ranking_anterior - ranking_actual
                 producto_hoy['ranking_anterior'] = ranking_anterior
-            else:
-                producto_hoy['variacion_ranking'] = None
-
             if precio_anterior is not None and precio_actual is not None:
                 producto_hoy['variacion_precio'] = precio_actual - precio_anterior
-            else:
-                producto_hoy['variacion_precio'] = None
-        else:
-            # no match -> consideramos nuevo
-            producto_hoy['variacion_ranking'] = None
-            producto_hoy['variacion_precio'] = None
-            producto_hoy['ranking_anterior'] = None
 
         productos_enriquecidos.append(producto_hoy)
 
     return productos_enriquecidos
-
 
 
 # --- Sidebar de Filtros ---
@@ -185,18 +164,15 @@ fechas = load_data(engine, "SELECT DISTINCT fecha_extraccion FROM public.product
 if fechas.empty:   
     st.error("No se pudieron cargar las fechas desde la base de datos.") 
 
-# Filtro de fecha
 fecha_maxima = fechas['fecha_extraccion'].max() if not fechas.empty else datetime.today().date()
 fecha_minima = fechas['fecha_extraccion'].min() if not fechas.empty else datetime.today().date() - timedelta(days=30)
 fecha_seleccionada = st.sidebar.date_input("Seleccione una Fecha", value=fecha_maxima, min_value=fecha_minima, max_value=fecha_maxima, format="DD/MM/YYYY")
 
-# Inicializar variables de selección
 selected_cat_principal = None
 selected_cat_secundaria = None
 
 df_anterior = pd.DataFrame()
 
-# Filtros de categoría (se cargan solo si la conexión a la BD es exitosa)
 if engine:
     query_cat_principal = "SELECT DISTINCT categoria_principal FROM public.productos_mas_vendidos WHERE categoria_principal IS NOT NULL ORDER BY categoria_principal;"
     df_cat_principal = load_data(engine, query_cat_principal)
@@ -220,12 +196,10 @@ if engine:
         
         if selected_cat_secundaria:
             query_marcas = "SELECT DISTINCT marca FROM public.productos_mas_vendidos WHERE categoria_principal = :cat_principal AND categoria_secundaria = :cat_secundaria AND marca IS NOT NULL ORDER BY marca;"
-            
             selected_marca = st.sidebar.selectbox(
                 "Marca", options=["Todas"], index=0, disabled=True
             )
             
-
 
 # --- Lógica de la consulta principal (Día seleccionado) ---
 df_productos = pd.DataFrame()
@@ -242,10 +216,10 @@ if engine and selected_cat_principal:
         query_base += " AND categoria_secundaria = :cat_s"
         params["cat_s"] = selected_cat_secundaria
 
-    # SOLO un ORDER BY, al final de todo
     query_base += " ORDER BY posicion ASC"
+    df_productos = load_data(engine, query_base, params=params)
 
-# --- Consulta del día anterior (para comparación de métricas) ---
+# --- Consulta del día anterior ---
 df_anterior = pd.DataFrame()
 if engine and selected_cat_principal:
     fecha_anterior = fecha_seleccionada - timedelta(days=1)
@@ -261,9 +235,9 @@ if engine and selected_cat_principal:
     if selected_cat_secundaria:
         query_anterior += " AND categoria_secundaria = :cat_s"
         params_anterior["cat_s"] = selected_cat_secundaria
-
+    
     query_anterior += " ORDER BY posicion ASC"
-
+    df_anterior = load_data(engine, query_anterior, params=params_anterior)
 
 
 # --- Página Principal ---
@@ -273,17 +247,14 @@ st.markdown(f"Mostrando resultados para la fecha: **{fecha_seleccionada.strftime
 if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
 else:
-    # --- Llamada única a la lógica de cálculo ---
     productos_hoy = df_productos.to_dict(orient='records')
     productos_ayer = df_anterior.to_dict(orient='records')
     productos_analizados = calcular_variaciones(productos_hoy, productos_ayer)
     
-    # --- Visualización en Grilla ---
     num_columnas = 5
     cols = st.columns(num_columnas)
 
     for i, producto in enumerate(productos_analizados):
-        # Usar los datos ya calculados por la función
         ranking_actual = producto['posicion']
         variacion_ranking = producto['variacion_ranking']
         precio_actual = producto['precio']
@@ -297,10 +268,8 @@ else:
                 else:
                     st.image("https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen", width='stretch')
 
-                # --- Métricas rápidas ---
                 c1, c2 = st.columns([7, 3])
                 with c1:
-                # Paso 1: Asegurarnos de que el producto tiene un precio válido.
                     if precio_actual:
                         delta_precio = round(variacion_precio, 2) if variacion_precio is not None and variacion_precio != 0 else None
                         st.metric(
@@ -309,24 +278,20 @@ else:
                             delta=delta_precio
                         )
                     else:
-                        # No hay variación, mostrar el precio con un delta informativo.
                         st.metric(
                             label="Precio",
                             value=f"${format_price(producto['precio'])}",
                             delta="Sin cambios",
-                            delta_color="off"  # 'off' para que el delta no se vea rojo o verde
+                            delta_color="off"
                         )
 
                 with c2:
-                    # --- LÓGICA MEJORADA PARA MOSTRAR EL RANKING ---
                     delta_ranking_texto = ""
                     if variacion_ranking is None:
                         delta_ranking_texto = "IN"
                     elif variacion_ranking == 0:
-                        # Si no hay variación, no mostramos delta para evitar el "0"
-                        delta_ranking_texto = None # O podrías poner "Sin cambios"
+                        delta_ranking_texto = None
                     else:
-                        # El f-string con '+' se encarga de poner el signo
                         delta_ranking_texto = f"{variacion_ranking:+#,}"
 
                     st.metric(
@@ -335,7 +300,6 @@ else:
                         delta=delta_ranking_texto
                     )
 
-                # Título (con link)
                 titulo_completo = producto['titulo']
                 titulo_mostrado = (titulo_completo[:60] + '...') if len(titulo_completo) > 60 else titulo_completo
                 st.markdown(f"""
@@ -350,5 +314,3 @@ else:
                         </a>
                     </h5>
                 """, unsafe_allow_html=True)
-
-
