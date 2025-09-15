@@ -159,6 +159,15 @@ if engine:
             selected_cat_secundaria = st.sidebar.selectbox(
                 "Categoría Secundaria", options=categorias_secundarias, index=0
             )
+        
+        if selected_cat_secundaria:
+            query_marcas = "SELECT DISTINCT marca FROM public.productos_mas_vendidos WHERE categoria_principal = :cat_principal AND categoria_secundaria = :cat_secundaria AND marca IS NOT NULL ORDER BY marca;"
+            
+            selected_marca = st.sidebar.selectbox(
+                "Marca", options=["Todas"], index=0, disabled=True
+            )
+            
+
 
 # --- Lógica de la consulta principal (Día seleccionado) ---
 df_productos = pd.DataFrame()
@@ -219,7 +228,7 @@ else:
     for i, producto in enumerate(productos_analizados):
         # Usar los datos ya calculados por la función
         ranking_actual = producto['posicion']
-        variacion_ranking = producto['variacion_ranking']
+        variacion_ranking = productos_analizados['variacion_ranking']
         precio_actual = producto['precio']
         variacion_precio = producto['variacion_precio']
 
