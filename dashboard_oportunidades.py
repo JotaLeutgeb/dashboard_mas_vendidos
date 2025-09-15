@@ -196,7 +196,7 @@ if engine and selected_cat_principal:
     
     # >>> CORRECCIÓN CLAVE: Añadidas 'link_publicacion' y 'posicion' a la consulta.
     query_anterior = """
-        ECT posicion, titulo, precio, imagen, link_publicacion, id_producto
+        SELECT posicion, titulo, precio, imagen, link_publicacion, id_producto
         FROM public.productos_mas_vendidos
         WHERE fecha_extraccion = :fecha
         AND categoria_principal = :cat_p
