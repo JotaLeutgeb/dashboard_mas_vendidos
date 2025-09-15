@@ -82,8 +82,11 @@ def format_price(value: float) -> str:
 def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Analiza los productos de hoy y ayer para calcular la variación de ranking y precio.
-    Usa id_producto como identificador estable y fallback en link_publicacion.
+    - Prioriza matching por titulo
+    - Fallback en id_producto
+    - Fallback en link_publicacion
     """
+
     def _parse_price(x):
         if x is None:
             return None
@@ -102,35 +105,37 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
         return productos_hoy
 
     df_ayer = pd.DataFrame(productos_ayer).copy()
-    if 'id_producto' not in df_ayer.columns:
-        df_ayer['id_producto'] = None
-    if 'link_publicacion' not in df_ayer.columns:
-        df_ayer['link_publicacion'] = None
-    if 'posicion' not in df_ayer.columns:
-        df_ayer['posicion'] = None
-    if 'precio' not in df_ayer.columns:
-        df_ayer['precio'] = None
-
+    for col in ['id_producto', 'link_publicacion', 'posicion', 'precio', 'titulo']:
+        if col not in df_ayer.columns:
+            df_ayer[col] = None
     df_ayer['precio_norm'] = df_ayer['precio'].apply(_parse_price)
 
     productos_enriquecidos = []
     for producto_hoy in productos_hoy:
         pid = producto_hoy.get('id_producto')
         link = producto_hoy.get('link_publicacion')
+        titulo_hoy = producto_hoy.get('titulo')
         ranking_actual = producto_hoy.get('posicion')
-        precio_actual_raw = producto_hoy.get('precio')
-        precio_actual = _parse_price(precio_actual_raw)
+        precio_actual = _parse_price(producto_hoy.get('precio'))
 
         producto_hoy['variacion_ranking'] = None
         producto_hoy['variacion_precio'] = None
         producto_hoy['ranking_anterior'] = None
 
         fila_anterior = None
-        if pid:
+        # match por titulo
+        if titulo_hoy:
+            mask = df_ayer['titulo'] == titulo_hoy
+            if mask.any():
+                fila_anterior = df_ayer[mask].iloc[0]
+
+        # fallback por id
+        if fila_anterior is None and pid:
             mask = df_ayer['id_producto'] == pid
             if mask.any():
                 fila_anterior = df_ayer[mask].iloc[0]
 
+        # fallback por link
         if fila_anterior is None and link:
             mask2 = df_ayer['link_publicacion'] == link
             if mask2.any():
@@ -141,7 +146,6 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
                 ranking_anterior = int(fila_anterior.get('posicion')) if fila_anterior.get('posicion') is not None else None
             except Exception:
                 ranking_anterior = None
-
             precio_anterior = fila_anterior.get('precio_norm')
 
             if ranking_anterior is not None and ranking_actual is not None:
@@ -153,6 +157,7 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
         productos_enriquecidos.append(producto_hoy)
 
     return productos_enriquecidos
+
 
 
 # --- Sidebar de Filtros ---
