@@ -91,16 +91,16 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
         return productos_hoy
 
     df_ayer = pd.DataFrame(productos_ayer)
-    df_ayer.set_index('link_publicacion', inplace=True)
+    df_ayer.set_index('id_producto', inplace=True)
 
     productos_enriquecidos = []
     for producto_hoy in productos_hoy:
-        link = producto_hoy['link_publicacion']
+        pid = producto_hoy['id_producto']
         ranking_actual = producto_hoy['posicion']
         precio_actual = producto_hoy['precio']
 
-        if link in df_ayer.index:
-            producto_anterior = df_ayer.loc[link]
+        if pid in df_ayer.index:
+            producto_anterior = df_ayer.loc[pid]
             ranking_anterior = int(producto_anterior['posicion'])
             precio_anterior = float(producto_anterior['precio'])
             
@@ -116,8 +116,7 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
             producto_hoy['ranking_anterior'] = None
         
         productos_enriquecidos.append(producto_hoy)
-    
-    return productos_enriquecidos
+        return productos_enriquecidos
 
 
 # --- Sidebar de Filtros ---
@@ -125,7 +124,7 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
 st.sidebar.title("📡 Radar de Oportunidad")
 st.sidebar.header("Filtros")
 
-fechas = load_data(engine, "SELECT DISTINCT fecha_extraccion FROM public.productos_mas_vendidos ORDER BY fecha_extraccion DESC;")
+fechas = load_data(engine, "SELECT DISTINCT fecha_extraccion FROM public.productos_mas_vendidos ORDER BY fecha_extraccion DESC;")   
 if fechas.empty:   
     st.error("No se pudieron cargar las fechas desde la base de datos.") 
 
@@ -175,7 +174,7 @@ if engine:
 df_productos = pd.DataFrame()
 if engine and selected_cat_principal:
     query_base = """
-        SELECT posicion, titulo, precio, imagen, link_publicacion 
+        SELECT posicion, titulo, precio, imagen, link_publicacion, id_producto
         FROM public.productos_mas_vendidos 
         WHERE fecha_extraccion = :fecha 
         AND categoria_principal = :cat_p
@@ -197,7 +196,7 @@ if engine and selected_cat_principal:
     
     # >>> CORRECCIÓN CLAVE: Añadidas 'link_publicacion' y 'posicion' a la consulta.
     query_anterior = """
-        SELECT posicion, titulo, precio, link_publicacion
+        ECT posicion, titulo, precio, imagen, link_publicacion, id_producto
         FROM public.productos_mas_vendidos
         WHERE fecha_extraccion = :fecha
         AND categoria_principal = :cat_p
@@ -214,35 +213,6 @@ if engine and selected_cat_principal:
 # --- Página Principal ---
 st.title("Productos más vendidos")
 st.markdown(f"Mostrando resultados para la fecha: **{fecha_seleccionada.strftime('%d/%m/%Y')}**")
-
-if engine and selected_cat_principal:
-    fecha_anterior = fecha_seleccionada - timedelta(days=1)
-    
-    query_anterior = """
-        SELECT posicion, titulo, precio, link_publicacion
-        FROM public.productos_mas_vendidos
-        WHERE fecha_extraccion = :fecha
-        AND categoria_principal = :cat_p
-    """
-    params_anterior = {"fecha": fecha_anterior, "cat_p": selected_cat_principal}
-
-    if selected_cat_secundaria:
-        query_anterior += " AND categoria_secundaria = :cat_s"
-        params_anterior["cat_s"] = selected_cat_secundaria
-    
-    df_anterior = load_data(engine, query_anterior, params=params_anterior)
-
-    # --- INICIO DEL BLOQUE DE DEPURACIÓN ---
-    with st.expander("🔍 Información de Depuración: Consulta del Día Anterior"):
-        st.write("Fecha anterior calculada para la consulta:", fecha_anterior)
-        st.write("Parámetros enviados a la consulta:", params_anterior)
-        st.write(f"La consulta para el día anterior encontró **{len(df_anterior)}** filas.")
-        if df_anterior.empty:
-            st.warning("El DataFrame del día anterior está vacío. Esto causa que todos los productos se muestren como 'IN'.")
-        else:
-            st.success("Se encontraron datos del día anterior. Mostrando una vista previa:")
-            st.dataframe(df_anterior.head())
-
 
 if df_productos.empty:
     st.warning("No se encontraron productos con los filtros seleccionados. Intenta con otra fecha o categoría.")
