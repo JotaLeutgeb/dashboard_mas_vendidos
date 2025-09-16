@@ -256,7 +256,7 @@ else:
     productos_ayer = df_anterior.to_dict(orient='records')
     productos_analizados = calcular_variaciones(productos_hoy, productos_ayer)
     
-    num_columnas = 6
+    num_columnas = 5
     cols = st.columns(num_columnas)
 
     for i, producto in enumerate(productos_analizados):
