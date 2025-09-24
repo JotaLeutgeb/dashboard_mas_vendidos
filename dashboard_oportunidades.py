@@ -298,58 +298,62 @@ else:
                                 st.image("https://placehold.co/120x120/F0F2F6/31333F?text=Sin+Imagen", width=120)
 
                         with info_col:
-                            # --- Título arriba ---
-                            titulo_completo = producto['titulo']
-                            st.markdown(
-                                f"""
-                                <h6 style="margin: 0; padding: 0;">
-                                    <a 
-                                        href="{producto['link_publicacion']}" 
-                                        target="_blank" 
-                                        title="{titulo_completo}"
-                                        style="text-decoration: none; color: inherit; font-weight: normal;"
-                                    >
-                                        {titulo_completo}
-                                    </a>
-                                </h6>
-                                """,
-                                unsafe_allow_html=True,
-                            )
+                            # --- Columnas para Título (izquierda) y Métricas (derecha) ---
+                            col_titulo, col_metricas = st.columns([3, 2]) # Ratio 60% título, 40% métricas
 
-                            # --- Métricas debajo del título, alineadas ---
-                            m1, m2 = st.columns([7, 3])
-                            with m1:
-                                if precio_actual:
-                                    delta_precio = (
-                                        round(variacion_precio, 2)
-                                        if variacion_precio is not None and variacion_precio != 0
-                                        else None
-                                    )
-                                    st.metric(
-                                        label="Precio",
-                                        value=f"${format_price(precio_actual)}",
-                                        delta=delta_precio,
-                                    )
-                                else:
-                                    st.metric(
-                                        label="Precio",
-                                        value=f"${format_price(producto['precio'])}",
-                                        delta="Sin cambios",
-                                        delta_color="off",
-                                    )
-
-                            with m2:
-                                delta_ranking_texto = ""
-                                if variacion_ranking is None:
-                                    delta_ranking_texto = "IN"
-                                elif variacion_ranking == 0:
-                                    delta_ranking_texto = None
-                                else:
-                                    delta_ranking_texto = f"{variacion_ranking:+#,}"
-
-                                st.metric(
-                                    label="Top",
-                                    value=f"{ranking_actual}",
-                                    delta=delta_ranking_texto,
+                            with col_titulo:
+                                titulo_completo = producto['titulo']
+                                st.markdown(
+                                    f"""
+                                    <h6 style="margin-top: 10px; padding: 0;">
+                                        <a 
+                                            href="{producto['link_publicacion']}" 
+                                            target="_blank" 
+                                            title="{titulo_completo}"
+                                            style="text-decoration: none; color: inherit; font-weight: normal;"
+                                        >
+                                            {titulo_completo}
+                                        </a>
+                                    </h6>
+                                    """,
+                                    unsafe_allow_html=True,
                                 )
+
+                            with col_metricas:
+                                # Mantenemos tus columnas anidadas para alinear las dos métricas
+                                m1, m2 = st.columns([7, 3])
+                                with m1:
+                                    if precio_actual:
+                                        delta_precio = (
+                                            round(variacion_precio, 2)
+                                            if variacion_precio is not None and variacion_precio != 0
+                                            else None
+                                        )
+                                        st.metric(
+                                            label="Precio",
+                                            value=f"${format_price(precio_actual)}",
+                                            delta=delta_precio,
+                                        )
+                                    else:
+                                        st.metric(
+                                            label="Precio",
+                                            value=f"${format_price(producto['precio'])}",
+                                            delta="Sin cambios",
+                                            delta_color="off",
+                                        )
+
+                                with m2:
+                                    delta_ranking_texto = ""
+                                    if variacion_ranking is None:
+                                        delta_ranking_texto = "IN"
+                                    elif variacion_ranking == 0:
+                                        delta_ranking_texto = None
+                                    else:
+                                        delta_ranking_texto = f"{variacion_ranking:+#,}"
+
+                                    st.metric(
+                                        label="Top",
+                                        value=f"{ranking_actual}",
+                                        delta=delta_ranking_texto,
+                                    )
 
