@@ -332,7 +332,7 @@ else:
                                         st.metric(
                                             label="Precio",
                                             value=f"${format_price(precio_actual)}",
-                                            delta=delta_precio,
+                                            delta=format_price(delta_precio),
                                         )
                                     else:
                                         st.metric(
