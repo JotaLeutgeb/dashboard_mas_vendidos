@@ -300,9 +300,9 @@ else:
 
                         with img_col:
                             if producto.get("imagen") and isinstance(producto["imagen"], str):
-                                st.image(producto["imagen"], width=120)
+                                st.image(producto["imagen"], width=100)
                             else:
-                                st.image("https://placehold.co/120x120/F0F2F6/31333F?text=Sin+Imagen", width=120)
+                                st.image("https://placehold.co/120x120/F0F2F6/31333F?text=Sin+Imagen", width=100)
 
                         with info_col:
                             # --- Columnas para Título (izquierda) y Métricas (derecha) ---
