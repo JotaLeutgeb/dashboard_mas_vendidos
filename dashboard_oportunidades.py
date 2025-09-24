@@ -270,20 +270,38 @@ else:
                 variacion_precio = producto['variacion_precio']
 
                 with col:
-                    with st.container(border=True, height=150):  # bajé la altura
-                        # Definimos dos columnas: una angosta para la imagen y otra más grande para el contenido
+                    with st.container(border=True, height=180):  
+                        # 2 columnas principales: imagen + info
                         img_col, info_col = st.columns([1, 2])  
 
                         with img_col:
                             if producto.get("imagen") and isinstance(producto["imagen"], str):
-                                st.image(producto["imagen"], width=120)  # imagen reducida
+                                st.image(producto["imagen"], width=120)
                             else:
                                 st.image("https://placehold.co/120x120/F0F2F6/31333F?text=Sin+Imagen", width=120)
 
                         with info_col:
-                            # Métricas en fila
-                            c1, c2 = st.columns([7, 3])
-                            with c1:
+                            # --- Título arriba ---
+                            titulo_completo = producto['titulo']
+                            st.markdown(
+                                f"""
+                                <h5 style="margin: 0; padding: 0;">
+                                    <a 
+                                        href="{producto['link_publicacion']}" 
+                                        target="_blank" 
+                                        title="{titulo_completo}"
+                                        style="text-decoration: none; color: inherit;"
+                                    >
+                                        {titulo_completo}
+                                    </a>
+                                </h5>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+
+                            # --- Métricas debajo del título, alineadas ---
+                            m1, m2 = st.columns([7, 3])
+                            with m1:
                                 if precio_actual:
                                     delta_precio = (
                                         round(variacion_precio, 2)
@@ -303,7 +321,7 @@ else:
                                         delta_color="off",
                                     )
 
-                            with c2:
+                            with m2:
                                 delta_ranking_texto = ""
                                 if variacion_ranking is None:
                                     delta_ranking_texto = "IN"
@@ -318,20 +336,3 @@ else:
                                     delta=delta_ranking_texto,
                                 )
 
-                            # Título del producto alineado horizontalmente
-                            titulo_completo = producto['titulo']
-                            st.markdown(
-                                f"""
-                                <h5 style="margin: 0; padding: 0;">
-                                    <a 
-                                        href="{producto['link_publicacion']}" 
-                                        target="_blank" 
-                                        title="{titulo_completo}"
-                                        style="text-decoration: none; color: inherit;"
-                                    >
-                                        {titulo_completo}
-                                    </a>
-                                </h5>
-                                """,
-                                unsafe_allow_html=True,
-                            )
