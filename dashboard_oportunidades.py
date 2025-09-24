@@ -94,7 +94,14 @@ def format_price(value: float) -> str:
     miles con punto y decimales con coma.
     Ejemplo: 1234567.89 -> '1.234.568'
     """
+    # --- AÑADIR ESTA VALIDACIÓN ---
+    # Si el valor es None, no se puede formatear, devolvemos None.
+    if value is None:
+        return None
+        
+    # Si el valor es un número, lo formatea como antes.
     return f"{value:,.0f}".replace(",", ".")
+
 
 def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -332,14 +339,7 @@ else:
                                         st.metric(
                                             label="Precio",
                                             value=f"${format_price(precio_actual)}",
-                                            delta=format_price(delta_precio),
-                                        )
-                                    else:
-                                        st.metric(
-                                            label="Precio",
-                                            value=f"${format_price(producto['precio'])}",
-                                            delta="Sin cambios",
-                                            delta_color="off",
+                                            delta=format_price(delta_precio) if delta_precio is not None else "Sin cambios",
                                         )
 
                                 with m2:
