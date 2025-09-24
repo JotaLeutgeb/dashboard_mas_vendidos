@@ -271,7 +271,7 @@ else:
                 variacion_precio = producto['variacion_precio']
 
                 with col:
-                    with st.container(border=True, height=200):  # bajé la altura
+                    with st.container(border=True, height=150):  # bajé la altura
                         # Definimos dos columnas: una angosta para la imagen y otra más grande para el contenido
                         img_col, info_col = st.columns([1, 2])  
 
@@ -321,9 +321,6 @@ else:
 
                             # Título del producto alineado horizontalmente
                             titulo_completo = producto['titulo']
-                            titulo_mostrado = (
-                                titulo_completo[:60] + "..." if len(titulo_completo) > 60 else titulo_completo
-                            )
                             st.markdown(
                                 f"""
                                 <h5 style="margin: 0; padding: 0;">
@@ -332,8 +329,6 @@ else:
                                         target="_blank" 
                                         title="{titulo_completo}"
                                         style="text-decoration: none; color: inherit;"
-                                    >
-                                        {titulo_mostrado}
                                     </a>
                                 </h5>
                                 """,
