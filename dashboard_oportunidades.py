@@ -158,6 +158,49 @@ def calcular_variaciones(productos_hoy: List[Dict[str, Any]], productos_ayer: Li
 
     return productos_enriquecidos
 
+# --- Estética ---
+st.markdown(
+    """
+    <style>
+    .card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+        gap: 1rem;
+    }
+    .card {
+        border: 1px solid #444;
+        border-radius: 12px;
+        padding: 1rem;
+        background: #0e1117;
+        display: flex;
+        flex-direction: row;
+        align-items: flex-start;
+        height: 100%;
+    }
+    .card-img {
+        max-width: 120px;
+        border-radius: 8px;
+        margin-right: 1rem;
+    }
+    .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .card-title {
+        margin: 0.5rem 0 0 0;
+        font-size: 1rem;
+        line-height: 1.3;
+    }
+    .card-title a {
+        text-decoration: none;
+        color: white;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 
 # --- Sidebar de Filtros ---
@@ -247,7 +290,7 @@ if engine and selected_cat_principal:
 
 # --- Página Principal ---
 # --- Página Principal ---
-st.title("Productos más vendidos")
+st.title("📡 Radar de Oportunidades")
 st.markdown(f"Mostrando resultados para la fecha: **{fecha_seleccionada.strftime('%d/%m/%Y')}**")
 
 if df_productos.empty:
@@ -257,82 +300,50 @@ else:
     productos_ayer = df_anterior.to_dict(orient='records')
     productos_analizados = calcular_variaciones(productos_hoy, productos_ayer)
 
-    # Ahora mostramos en filas de 2 columnas (grid horizontal más espaciosa)
-    for i in range(0, len(productos_analizados), 2):
-        cols = st.columns(2)  # solo 2 columnas por fila
+    st.markdown('<div class="card-container">', unsafe_allow_html=True)
 
-        for j, col in enumerate(cols):
-            if i + j < len(productos_analizados):
-                producto = productos_analizados[i + j]
+    for producto in productos_analizados:
+        ranking_actual = producto['posicion']
+        variacion_ranking = producto['variacion_ranking']
+        precio_actual = producto['precio']
+        variacion_precio = producto['variacion_precio']
 
-                ranking_actual = producto['posicion']
-                variacion_ranking = producto['variacion_ranking']
-                precio_actual = producto['precio']
-                variacion_precio = producto['variacion_precio']
+        # Definimos métricas en texto HTML (imitando st.metric pero embebido)
+        if precio_actual:
+            delta_precio = (
+                f"{variacion_precio:+,.0f}" if variacion_precio is not None and variacion_precio != 0 else ""
+            )
+            precio_html = f"<b>Precio:</b> ${format_price(precio_actual)} <small>{delta_precio}</small>"
+        else:
+            precio_html = f"<b>Precio:</b> ${format_price(producto['precio'])}"
 
-                with col:
-                    with st.container(border=True, height=150):  # bajé la altura
-                        # Definimos dos columnas: una angosta para la imagen y otra más grande para el contenido
-                        img_col, info_col = st.columns([1, 2])  
+        if variacion_ranking is None:
+            delta_ranking = "IN"
+        elif variacion_ranking == 0:
+            delta_ranking = ""
+        else:
+            delta_ranking = f"{variacion_ranking:+,}"
 
-                        with img_col:
-                            if producto.get("imagen") and isinstance(producto["imagen"], str):
-                                st.image(producto["imagen"], width=120)  # imagen reducida
-                            else:
-                                st.image("https://placehold.co/120x120/F0F2F6/31333F?text=Sin+Imagen", width=120)
+        ranking_html = f"<b>Top:</b> {ranking_actual} <small>{delta_ranking}</small>"
 
-                        with info_col:
-                            # Métricas en fila
-                            c1, c2 = st.columns([7, 3])
-                            with c1:
-                                if precio_actual:
-                                    delta_precio = (
-                                        round(variacion_precio, 2)
-                                        if variacion_precio is not None and variacion_precio != 0
-                                        else None
-                                    )
-                                    st.metric(
-                                        label="Precio",
-                                        value=f"${format_price(precio_actual)}",
-                                        delta=delta_precio,
-                                    )
-                                else:
-                                    st.metric(
-                                        label="Precio",
-                                        value=f"${format_price(producto['precio'])}",
-                                        delta="Sin cambios",
-                                        delta_color="off",
-                                    )
+        # Render de la card
+        titulo_completo = producto['titulo']
+        imagen_url = producto.get("imagen") or "https://placehold.co/120x120/F0F2F6/31333F?text=Sin+Imagen"
 
-                            with c2:
-                                delta_ranking_texto = ""
-                                if variacion_ranking is None:
-                                    delta_ranking_texto = "IN"
-                                elif variacion_ranking == 0:
-                                    delta_ranking_texto = None
-                                else:
-                                    delta_ranking_texto = f"{variacion_ranking:+#,}"
+        card_html = f"""
+        <div class="card">
+            <img src="{imagen_url}" class="card-img">
+            <div class="card-body">
+                <div>
+                    <p style="margin:0;">{precio_html}</p>
+                    <p style="margin:0;">{ranking_html}</p>
+                </div>
+                <h5 class="card-title" title="{titulo_completo}">
+                    <a href="{producto['link_publicacion']}" target="_blank">{titulo_completo}</a>
+                </h5>
+            </div>
+        </div>
+        """
+        st.markdown(card_html, unsafe_allow_html=True)
 
-                                st.metric(
-                                    label="Top",
-                                    value=f"{ranking_actual}",
-                                    delta=delta_ranking_texto,
-                                )
-
-                            # Título del producto alineado horizontalmente
-                            titulo_completo = producto['titulo']
-                            st.markdown(
-                                f"""
-                                <h5 style="margin: 0; padding: 0;">
-                                    <a 
-                                        href="{producto['link_publicacion']}" 
-                                        target="_blank" 
-                                        title="{titulo_completo}"
-                                        style="text-decoration: none; color: inherit;"
-                                    >
-                                        {titulo_completo}
-                                    </a>
-                                </h5>
-                                """,
-                                unsafe_allow_html=True,
-                            )
+    st.markdown('</div>', unsafe_allow_html=True)
