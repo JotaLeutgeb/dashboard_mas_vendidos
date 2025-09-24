@@ -339,7 +339,7 @@ else:
                                         st.metric(
                                             label="Precio",
                                             value=f"${format_price(precio_actual)}",
-                                            delta=format_price(delta_precio) if delta_precio is not None else "Sin cambios",
+                                            delta=format_price(delta_precio),
                                         )
 
                                 with m2:
