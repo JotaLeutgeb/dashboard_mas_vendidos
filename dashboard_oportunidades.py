@@ -329,6 +329,8 @@ else:
                                         target="_blank" 
                                         title="{titulo_completo}"
                                         style="text-decoration: none; color: inherit;"
+                                    >
+                                        {titulo_completo}
                                     </a>
                                 </h5>
                                 """,
