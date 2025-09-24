@@ -38,13 +38,13 @@ st.markdown("""
     }
     /* Reduce el tamaño de la fuente de la ETIQUETA de la métrica */
     [data-testid="stMetricLabel"] {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
     /* Reduce el tamaño de la fuente del DELTA de la métrica */
     [data-testid="stMetricDelta"] {
         font-size: 1rem;
     }
-    </style>
+    
 """, unsafe_allow_html=True)
 
 
