@@ -294,7 +294,7 @@ else:
                 variacion_precio = producto['variacion_precio']
 
                 with col:
-                    with st.container(border=True, height=130):  
+                    with st.container(border=True, height=135):  
                         # 2 columnas principales: imagen + info
                         img_col, info_col = st.columns([3, 10])  
 
