@@ -30,6 +30,23 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+st.markdown("""
+    <style>
+    /* Reduce el tamaño de la fuente del VALOR de la métrica */
+    [data-testid="stMetricValue"] {
+        font-size: 1.8rem;
+    }
+    /* Reduce el tamaño de la fuente de la ETIQUETA de la métrica */
+    [data-testid="stMetricLabel"] {
+        font-size: 0.9rem;
+    }
+    /* Reduce el tamaño de la fuente del DELTA de la métrica */
+    [data-testid="stMetricDelta"] {
+        font-size: 1rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 
 # --- Conexión a la Base de Datos (usando st.secrets) ---
 
@@ -285,16 +302,16 @@ else:
                             titulo_completo = producto['titulo']
                             st.markdown(
                                 f"""
-                                <h5 style="margin: 0; padding: 0;">
+                                <h6 style="margin: 0; padding: 0;">
                                     <a 
                                         href="{producto['link_publicacion']}" 
                                         target="_blank" 
                                         title="{titulo_completo}"
-                                        style="text-decoration: none; color: inherit;"
+                                        style="text-decoration: none; color: inherit; font-weight: normal;"
                                     >
                                         {titulo_completo}
                                     </a>
-                                </h5>
+                                </h6>
                                 """,
                                 unsafe_allow_html=True,
                             )
