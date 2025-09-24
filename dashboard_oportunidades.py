@@ -272,7 +272,7 @@ else:
                 with col:
                     with st.container(border=True, height=180):  
                         # 2 columnas principales: imagen + info
-                        img_col, info_col = st.columns([3, 10])  
+                        img_col, info_col = st.columns([2, 10])  
 
                         with img_col:
                             if producto.get("imagen") and isinstance(producto["imagen"], str):
