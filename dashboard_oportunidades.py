@@ -34,7 +34,7 @@ st.markdown("""
     <style>
     /* Reduce el tamaño de la fuente del VALOR de la métrica */
     [data-testid="stMetricValue"] {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
     }
     /* Reduce el tamaño de la fuente de la ETIQUETA de la métrica */
     [data-testid="stMetricLabel"] {
