@@ -271,7 +271,7 @@ else:
                 variacion_precio = producto['variacion_precio']
 
                 with col:
-                    with st.container(border=True, height=470):
+                    with st.container(border=True, height=200):
                         if producto.get("imagen") and isinstance(producto["imagen"], str):
                             st.image(producto["imagen"], use_container_width=True)
                         else:
