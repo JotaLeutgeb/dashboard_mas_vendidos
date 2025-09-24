@@ -271,64 +271,71 @@ else:
                 variacion_precio = producto['variacion_precio']
 
                 with col:
-                    with st.container(border=True, height=200):
-                        if producto.get("imagen") and isinstance(producto["imagen"], str):
-                            st.image(producto["imagen"], use_container_width=True)
-                        else:
-                            st.image("https://placehold.co/300x300/F0F2F6/31333F?text=Sin+Imagen", use_container_width=True)
+                    with st.container(border=True, height=200):  # bajé la altura
+                        # Definimos dos columnas: una angosta para la imagen y otra más grande para el contenido
+                        img_col, info_col = st.columns([1, 2])  
 
-                        c1, c2 = st.columns([7, 3])
-                        with c1:
-                            if precio_actual:
-                                delta_precio = (
-                                    round(variacion_precio, 2)
-                                    if variacion_precio is not None and variacion_precio != 0
-                                    else None
-                                )
-                                st.metric(
-                                    label="Precio",
-                                    value=f"${format_price(precio_actual)}",
-                                    delta=delta_precio,
-                                )
+                        with img_col:
+                            if producto.get("imagen") and isinstance(producto["imagen"], str):
+                                st.image(producto["imagen"], width=120)  # imagen reducida
                             else:
+                                st.image("https://placehold.co/120x120/F0F2F6/31333F?text=Sin+Imagen", width=120)
+
+                        with info_col:
+                            # Métricas en fila
+                            c1, c2 = st.columns([7, 3])
+                            with c1:
+                                if precio_actual:
+                                    delta_precio = (
+                                        round(variacion_precio, 2)
+                                        if variacion_precio is not None and variacion_precio != 0
+                                        else None
+                                    )
+                                    st.metric(
+                                        label="Precio",
+                                        value=f"${format_price(precio_actual)}",
+                                        delta=delta_precio,
+                                    )
+                                else:
+                                    st.metric(
+                                        label="Precio",
+                                        value=f"${format_price(producto['precio'])}",
+                                        delta="Sin cambios",
+                                        delta_color="off",
+                                    )
+
+                            with c2:
+                                delta_ranking_texto = ""
+                                if variacion_ranking is None:
+                                    delta_ranking_texto = "IN"
+                                elif variacion_ranking == 0:
+                                    delta_ranking_texto = None
+                                else:
+                                    delta_ranking_texto = f"{variacion_ranking:+#,}"
+
                                 st.metric(
-                                    label="Precio",
-                                    value=f"${format_price(producto['precio'])}",
-                                    delta="Sin cambios",
-                                    delta_color="off",
+                                    label="Top",
+                                    value=f"{ranking_actual}",
+                                    delta=delta_ranking_texto,
                                 )
 
-                        with c2:
-                            delta_ranking_texto = ""
-                            if variacion_ranking is None:
-                                delta_ranking_texto = "IN"
-                            elif variacion_ranking == 0:
-                                delta_ranking_texto = None
-                            else:
-                                delta_ranking_texto = f"{variacion_ranking:+#,}"
-
-                            st.metric(
-                                label="Top",
-                                value=f"{ranking_actual}",
-                                delta=delta_ranking_texto,
+                            # Título del producto alineado horizontalmente
+                            titulo_completo = producto['titulo']
+                            titulo_mostrado = (
+                                titulo_completo[:60] + "..." if len(titulo_completo) > 60 else titulo_completo
                             )
-
-                        titulo_completo = producto['titulo']
-                        titulo_mostrado = (
-                            titulo_completo[:60] + "..." if len(titulo_completo) > 60 else titulo_completo
-                        )
-                        st.markdown(
-                            f"""
-                            <h5 style="margin: 0; padding: 0;">
-                                <a 
-                                    href="{producto['link_publicacion']}" 
-                                    target="_blank" 
-                                    title="{titulo_completo}"
-                                    style="text-decoration: none; color: inherit;"
-                                >
-                                    {titulo_mostrado}
-                                </a>
-                            </h5>
-                            """,
-                            unsafe_allow_html=True,
-                        )
+                            st.markdown(
+                                f"""
+                                <h5 style="margin: 0; padding: 0;">
+                                    <a 
+                                        href="{producto['link_publicacion']}" 
+                                        target="_blank" 
+                                        title="{titulo_completo}"
+                                        style="text-decoration: none; color: inherit;"
+                                    >
+                                        {titulo_mostrado}
+                                    </a>
+                                </h5>
+                                """,
+                                unsafe_allow_html=True,
+                            )
